@@ -1,7 +1,7 @@
 #encoding:UTF-8
 require 'tk'
 
-load 'main.rb'
+load 'lib.rb'
 
 def si_info_prefix (amount, index=0)
   if amount >= 1024 then
@@ -19,10 +19,12 @@ def si_info_prefix (amount, index=0)
   end
 end
 
+
 class GUI < App
 
   @tree = "tree"
   
+
   def initialize ()
     super()
     
@@ -48,6 +50,9 @@ class GUI < App
 
   def set_graph ()
   end
+
+  def set_update_button ()
+  end
   
   def loop ()
     Tk.mainloop
@@ -60,6 +65,10 @@ log_list = (read_log_file LOG_FILE).sort {|a, b|
   a.date.year * 366 + a.date.month * 12 + a.date.day <=>
   b.date.year * 366 + b.date.month * 12 + b.date.day
 }
+
+
+
+### test ###
 
 
 gui = GUI.new()

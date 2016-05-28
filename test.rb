@@ -1,4 +1,18 @@
 
+require 'clockwork'
+include Clockwork
+
+x=0
+
+every(5.second, 'hello.job') do
+  x += 1
+  print x
+end
+
+
+
+__END__
+
 require("tk")
 
 ammount_mat = [1, 2, 3, 4, 1, 5 ,2,
@@ -62,8 +76,5 @@ end
 draw_used_ammount(canvas, ammount_mat)
 
 Tk.mainloop
-
-
-
 
 

@@ -1,5 +1,6 @@
-require 'bundler'
-Bundler.require
+
+require 'clockwork'
+#include Clockwork
 
 ### struct, core
 
@@ -77,6 +78,10 @@ def write_log_file (file_path, communicate_logs)
 end
 
 
+def diff_file_to_communicate_list (file_path)
+  read_diff_file(file_path).map {|x| array_to_communicate x}
+end
+
 ### T:todays_communicate, C:communicate_logs. f(T C) => X
 
 def get_mdate ()
@@ -91,26 +96,26 @@ def rinthesis_communicate (comus1, comus2)
       comus2 = comus2.reject {|item| item == c2}
       Communicate.new(c1.interface,
                       c1.receive + c2.receive,
-                      c1.receive + c2.receive)
+                      c1.transmit + c2.transmit)
     else
       c1
     end
   } + comus2
 end
 
-def subtract_communicate (comus2, comus1)
+def subtract_communicate (comus1, comus2)
   comus1.map{|c1|  
     c2 = comus2.find{|item| item.interface == c1.interface}
     if c2 != nil then
       comus2 = comus2.reject {|item| item == c2}
       Communicate.new(c1.interface,
                       c1.receive - c2.receive,
-                      c1.receive - c2.receive)
+                      c1.transmit - c2.transmit)
     else
       c1
     end
   } + comus2
-end  
+end
 
 def rinthesis_log (mdate, commus1, commus2)
   CommunicateLog.new(mdate, rinthesis_communicate(commus1, commus2))
@@ -121,10 +126,9 @@ def todays_log_update (diff_commus, today_commus, date, ref_diff_com = [])
   updated_commu = rinthesis_communicate(today_commus,
                                         subtract_communicate(diff_commus, ref_diff_com))
     
-  ref_diff_com  = rinthesis_communicate(diff_commus,
-                                        ref_diff_com == [] ? [] : ref_diff_com)
+  ref_diff_com  = subtract_communicate(diff_commus, ref_diff_com)
 
-  return CommunicateLog.new(date, updated_commu), ref_diff_com
+  return CommunicateLog.new(date, updated_commu), diff_commus
 end
 
 def update_logs (diff_file_path, communicate_logs, date, ref_diff_com=[])
@@ -134,7 +138,7 @@ def update_logs (diff_file_path, communicate_logs, date, ref_diff_com=[])
   else
     today_commus = today_commus.communicate_list
   end
-  diff_commus = read_diff_file(diff_file_path).map {|x| array_to_communicate x}
+  diff_commus = diff_file_to_communicate_list(diff_file_path)
   u_todays_log, u_ref_diff_com = # u:updated
     todays_log_update(diff_commus, today_commus, date, ref_diff_com)
 
@@ -159,42 +163,47 @@ end
 ### Class application
 class App
   
-  attr_accessor :diff_file_path, :log_file_path, :communicate_logs, :now_communicate
+  attr_accessor :diff_file_path, :log_file_path, :communicate_logs, :today_communicate,
+  :date, :ref_commu_diff, :todays_log
   
   def initialize ()
     @diff_file_path = DIFF_FILE
     @log_file_path = LOG_FILE
     
     day = Time.new()
-    @now = MDate.new(day.year, day.month, day.day)
+    @date = MDate.new(day.year, day.month, day.day)
     
     @communicate_logs = (read_log_file @log_file_path).sort {|a, b|
-      a.date.year * 403 + a.date.month * 13 + a.date.day <=>
-      b.date.year * 403 + b.date.month * 13 + b.date.day
+      a.date.year * 403 + a.date.month * 32 + a.date.day <=>
+      b.date.year * 403 + b.date.month * 32 + b.date.day
     }
+
+    @todays_log, @ref_commu_diff =
+      todays_log_update(diff_file_to_communicate_list(@diff_file_path),
+                        [], @date)
     
-    @now_communicate =
-      if ([] == (todays_log = @communicate_logs.select {|item| item.date == @now}))
-        read_diff_file(DIFF_FILE)
-      else
-        #todays_log + read_diff_file( DIFF_FILE)
-        # Gousei log file
-      end
+    @communicate_logs = @communicate_logs.select{|x| x.date != @date} + [@todays_log]
+    
+    
+  end
+
+  def normal_update ()
+    @communicate_logs, @ref_commu_diff =  update_logs(@diff_file_path, @communicate_logs,
+                                                      @date, @ref_commu_diff)
+    write_log_file(@log_file_path, @communicate_logs)
+  end
+
+  def change_day_update ()
+    @communicate_logs, @ref_commu_diff, @date =
+      change_day(@diff_file_path, @communicate_logs, @date, @ref_commu_diff)
+    write_log_file(@log_file_path, @communicate_logs)
   end
   
 end 
 
 
-t = Time.new()
-date = MDate.new(t.year, t.month, t.day)
+
+## test ###
 
 app = App.new
-#app.communicate_logs[0].communicate_list.map {|x| print x; print "\n"}
-#print "\n\n"
 
-#updated_log, reflected_commus,date = change_day(DIFF_FILE, read_log_file(LOG_FILE), date)
-
-#updated_log.map{|x| print x; print "\n"}
-
-#print "\n"
-#print get_mdate()
