@@ -28,7 +28,8 @@ class GUI < App
   def initialize ()
     super()
     
-    set_tree 
+    set_tree
+    set_update_label
   end
 
   
@@ -46,12 +47,19 @@ class GUI < App
       @tree.insert(value:[date, si_info_prefix(reci),
                           si_info_prefix(trans), si_info_prefix(reci+trans)])
     }
+    
   end
 
+  def set_update_label ()
+    date_str = File::mtime(@diff_file_path).strftime("%Y/%m/%d %H:%M")
+    @update_label =
+      TkLabel.new(nil,
+                  text: "the time of last access to log_file was #{date_str}")
+    @update_label.pack
+  end
+
+  
   def set_graph ()
-  end
-
-  def set_update_button ()
   end
   
   def loop ()

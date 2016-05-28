@@ -1,8 +1,11 @@
 
-require 'clockwork'
+#require 'clockwork'
 #include Clockwork
 
 ### struct, core
+
+Dir.chdir(File.expand_path(File.dirname(__FILE__)))
+
 
 DIFF_FILE = "/proc/net/dev"
 LOG_FILE = "communication_log.txt"
@@ -169,6 +172,7 @@ class App
   def initialize ()
     @diff_file_path = DIFF_FILE
     @log_file_path = LOG_FILE
+
     
     day = Time.new()
     @date = MDate.new(day.year, day.month, day.day)
@@ -205,5 +209,5 @@ end
 
 ## test ###
 
-app = App.new
+#app = App.new
 
